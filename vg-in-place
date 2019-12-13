@@ -20,9 +20,16 @@ fi
 # echo "Name of this script: " $scriptname
 
 vgbasedir=`dirname $scriptname`
-
-# echo "VG base directory:   " $vgbasedir
-
+if [ -f $vgbasedir/coregrind/valgrind -a -d $vgbasedir/.in_place ]
+then
+    echo "VG base directory:   " $vgbasedir
+else
+    vgbasedir=$PWD
+    if [ -f $vgbasedir/coregrind/valgrind -a -d $vgbasedir/.in_place ]
+    then
+        echo "VG build directory:   " $vgbasedir
+    fi
+fi
 
 # We set both VALGRIND_LIB and VALGRIND_LIB_INNER to handle normal and
 # 'inner' builds.

@@ -1648,6 +1648,7 @@ static const HChar* show_hwcaps_amd64 ( UInt hwcaps )
       { VEX_HWCAPS_AMD64_BMI,    "bmi"    },
       { VEX_HWCAPS_AMD64_F16C,   "f16c"   },
       { VEX_HWCAPS_AMD64_RDRAND, "rdrand" },
+      { VEX_HWCAPS_AMD64_SHA,    "sha_ni" },
    };
    /* Allocate a large enough buffer */
    static HChar buf[sizeof prefix + 
@@ -1960,6 +1961,7 @@ static void check_hwcaps ( VexArch arch, UInt hwcaps )
          Bool have_avx   = (hwcaps & VEX_HWCAPS_AMD64_AVX)   != 0;
          Bool have_bmi   = (hwcaps & VEX_HWCAPS_AMD64_BMI)   != 0;
          Bool have_avx2  = (hwcaps & VEX_HWCAPS_AMD64_AVX2)  != 0;
+         Bool have_sha   = (hwcaps & VEX_HWCAPS_AMD64_SHA)   != 0;
 
          /* SSSE3 without SSE3 */
          if (have_ssse3 && !have_sse3)
@@ -1976,6 +1978,9 @@ static void check_hwcaps ( VexArch arch, UInt hwcaps )
          if (have_bmi && !have_avx)
             invalid_hwcaps(arch, hwcaps,
                            "Support for BMI requires AVX capabilities\n");
+         if (have_sha && !have_avx)
+            invalid_hwcaps(arch, hwcaps,
+                           "Support for SHA_NI requires AVX capabilities\n");
          return;
       }
 

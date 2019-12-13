@@ -3058,6 +3058,26 @@ AC_MSG_RESULT([no])
 
 AM_CONDITIONAL(BUILD_F16C_TESTS, test x$ac_have_as_f16c = xyes)
 
+# does the amd64 assembler understand SHA1MSG1 (from SHA-NI)?
+# Note, this doesn't generate a C-level symbol.  It generates a
+# automake-level symbol (BUILD_SHA_TESTS), used in test Makefile.am's
+# TODO: arm (SHA1M Qd, Sn, Vm.4S), power8
+AC_MSG_CHECKING([if amd64 assembler knows the SHA insn])
+
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[
+  do { long long int x;
+   __asm__ __volatile__(
+      "sha1msg1 %%xmm2, %%xmm1" : : : "xmm2", "xmm1" ); }
+  while (0)
+]])], [
+ac_have_as_sha=yes
+AC_MSG_RESULT([yes])
+], [
+ac_have_as_sha=no
+AC_MSG_RESULT([no])
+])
+
+AM_CONDITIONAL(BUILD_SHA_TESTS, test x$ac_have_as_sha = xyes)
 
 # does the x86/amd64 assembler understand MOVBE?
 # Note, this doesn't generate a C-level symbol.  It generates a

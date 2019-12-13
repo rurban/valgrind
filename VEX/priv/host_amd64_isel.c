@@ -5303,6 +5303,7 @@ HInstrArray* iselSB_AMD64 ( const IRSB* bb,
                      | VEX_HWCAPS_AMD64_BMI
                      | VEX_HWCAPS_AMD64_AVX2
                      | VEX_HWCAPS_AMD64_F16C
+                     | VEX_HWCAPS_AMD64_SHA
                      | VEX_HWCAPS_AMD64_RDRAND)));
 
    /* Check that the host's endianness is as expected. */

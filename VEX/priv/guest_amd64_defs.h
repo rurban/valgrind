@@ -189,6 +189,8 @@ extern void  amd64g_dirtyhelper_OUT ( ULong portno, ULong data,
 
 extern void amd64g_dirtyhelper_SxDT ( void* address,
                                       ULong op /* 0 or 1 */ );
+extern void amd64g_dirtyhelper_SHAx ( V128 *out, V128 m0, V128 m1,
+                                      ULong op /* opcode part */ );
 
 // This returns a 32-bit value from the host's RDRAND in bits 31:0, and the
 // resulting C flag value in bit 32.

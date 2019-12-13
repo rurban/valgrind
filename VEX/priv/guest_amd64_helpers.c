@@ -3449,6 +3449,147 @@ void amd64g_dirtyhelper_CPUID_avx2 ( VexGuestAMD64State* st,
 #  undef SET_ABCD
 }
 
+/* Claim to be the following baseline AMD Ryzen CPU (2 x ...), which is SHA_NI capable.
+
+   vendor_id	: AuthenticAMD
+   cpu family	: 23
+   model	: 24
+   model name	: AMD Ryzen 3 3200U with Radeon Vega Mobile Gfx
+   stepping	: 1
+   microcode	: 0x8108102
+   cpu MHz	: 1681.759
+   cache size	: 512 KB
+   physical id	: 0
+   siblings	: 4
+   core id	: 1
+   cpu cores	: 2
+   apicid	: 3
+   initial apicid : 3
+   fpu		: yes
+   fpu_exception : yes
+   cpuid level	: 13
+   wp		: yes
+   flags	: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl nonstop_tsc cpuid extd_apicid aperfmperf pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb hw_pstate sme ssbd sev ibpb vmmcall fsgsbase bmi1 avx2 smep bmi2 rdseed adx smap clflushopt sha_ni xsaveopt xsavec xgetbv1 xsaves clzero irperf xsaveerptr arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif overflow_recov succor smca
+   bugs		: sysret_ss_attrs null_seg spectre_v1 spectre_v2 spec_store_bypass
+   bogomips	: 5190.28
+   TLB size	: 2560 4K pages
+   clflush size	: 64
+   cache_alignment : 64
+   address sizes   : 43 bits physical, 48 bits virtual
+   power management: ts ttp tm hwpstate eff_freq_ro [13] [14]
+
+sha_ni is in ebx, bit 29
+*/
+void amd64g_dirtyhelper_CPUID_sha ( VexGuestAMD64State* st,
+                                     ULong hasF16C, ULong hasRDRAND )
+{
+   vassert((hasF16C >> 1) == 0ULL);
+   vassert((hasRDRAND >> 1) == 0ULL);
+#  define SET_ABCD(_a,_b,_c,_d)                \
+      do { st->guest_RAX = (ULong)(_a);        \
+           st->guest_RBX = (ULong)(_b);        \
+           st->guest_RCX = (ULong)(_c);        \
+           st->guest_RDX = (ULong)(_d);        \
+      } while (0)
+
+   UInt old_eax = (UInt)st->guest_RAX;
+   UInt old_ecx = (UInt)st->guest_RCX;
+
+   switch (old_eax) {
+      case 0x00000000:
+         SET_ABCD(0x0000000d, 0x68747541, 0x444d4163, 0x69746e65);
+         break;
+      case 0x00000001: {
+         // As a baseline, advertise neither F16C (ecx:29) nor RDRAND (ecx:30),
+         // but patch in support for them as directed by the caller.
+         UInt ecx_extra
+            = (hasF16C ? (1U << 29) : 0) | (hasRDRAND ? (1U << 30) : 0);
+         SET_ABCD(0x00810f81, 0x01040800, (0x7ed8320b | ecx_extra), 0x178bfbff);
+         break;
+      }
+      case 0x00000005:
+         SET_ABCD(0x00000040, 0x00000040, 0x00000003, 0x00000011);
+         break;
+      case 0x00000006:
+         SET_ABCD(0x00000004, 0x00000000, 0x00000001, 0x00000000);
+         break;
+      case 0x00000007:
+         if (old_ecx = 0x0)
+            SET_ABCD(0x00000000, 0x209c01a9, 0x00000000, 0x00000000);
+         else
+            SET_ABCD(0x00000000, 0x00000000, 0x00000000, 0x00000000);
+         break;
+      case 0x0000000d:
+         switch (old_ecx) {
+            case 0x00000000:
+               SET_ABCD(0x00000000, 0x00000000, 0x00000000, 0x00000000);
+               break;
+            case 0x00000001:
+               SET_ABCD(0x00000000, 0x00000000, 0x00000000, 0x00000000);
+               break;
+            case 0x00000002:
+               SET_ABCD(0x00000000, 0x00000000, 0x00000000, 0x00000000);
+               break;
+            default:
+               SET_ABCD(0x00000000, 0x00000000, 0x00000000, 0x00000000);
+               break;
+         }
+         break;
+      case 0x80000000:
+         SET_ABCD(0x8000001f, 0x68747541, 0x444d4163, 0x69746e65);
+         break;
+      case 0x80000001:
+         SET_ABCD(0x00810f81, 0x00000000, 0x35c233ff, 0x2fd3fbff);
+         break;
+      case 0x80000002:
+         SET_ABCD(0x20444d41, 0x657a7952, 0x2033206e, 0x30303233);
+         break;
+      case 0x80000003:
+         SET_ABCD(0x69772055, 0x52206874, 0x6f656461, 0x6556206e);
+         break;
+      case 0x80000004:
+         SET_ABCD(0x4d206167, 0x6c69626f, 0x66472065, 0x00202078);
+         break;
+      case 0x80000005:
+         SET_ABCD(0xff40ff40, 0xff40ff40, 0x20080140, 0x40040140 );
+         break;
+      case 0x80000006:
+         SET_ABCD(0x26006400, 0x66006400, 0x02006140, 0x00208140 );
+         break;
+      case 0x80000007:
+         SET_ABCD(0x00000000, 0x0000001b, 0x00000000, 0x00006599 );
+         break;
+      case 0x80000008:
+         SET_ABCD(0x00003030, 0x00001007, 0x00004003, 0x00000000 );
+         break;
+      case 0x8000000a:
+         SET_ABCD(0x00000001, 0x00008000, 0x00000000, 0x0001bcff);
+         break;
+      case 0x80000019:
+         SET_ABCD(0xf040f040, 0x00000000, 0x00000000, 0x00000000);
+         break;
+      case 0x8000001a:
+         SET_ABCD(0x00000003, 0x00000000, 0x00000000, 0x00000000);
+         break;
+      case 0x8000001b:
+         SET_ABCD(0x000003ff, 0x00000000, 0x00000000, 0x00000000);
+         break;
+      case 0x8000001d:
+         SET_ABCD(0x00004121, 0x01c0003f, 0x0000003f, 0x00000000);
+         break;
+      case 0x8000001e:
+         SET_ABCD(0x00000001, 0x00000100, 0x00000000, 0x00000000);
+         break;
+      case 0x8000001f:
+         SET_ABCD(0x0000000f, 0x0000016f, 0x0000000f, 0x00000000);
+         break;
+      default:
+         SET_ABCD(0x00000000, 0x00000000, 0x00000000, 0x00000000);
+         break;
+   }
+#  undef SET_ABCD
+}
+
 
 /*---------------------------------------------------------------*/
 /*--- Misc integer helpers, including rotates and crypto.     ---*/
@@ -3750,6 +3891,42 @@ void amd64g_dirtyhelper_SxDT ( void *address, ULong op ) {
    UChar* p = (UChar*)address;
    p[0] = p[1] = p[2] = p[3] = p[4] = p[5] = 0;
    p[6] = p[7] = p[8] = p[9] = 0;
+#  endif
+}
+
+/* DIRTY HELPER (non-referentially-transparent) */
+/* Horrible hack.  On non-amd64 platforms, do nothing. See dis_ESC_0F38() */
+void amd64g_dirtyhelper_SHAx ( V128 *out, V128 m0, V128 m1, ULong op ) {
+#  if 0 && defined(__x86_64__)
+   switch (op) {
+      case 0xC8:
+         __asm__ __volatile__("sha1nexte (%0, %1)" : : "r" (m0) : "memory");
+         break;
+      case 0xC9:
+         __asm__ __volatile__("sha1msg1 (%0, %1)" : : "r" (m0) : "memory");
+         break;
+      case 0xCA:
+         __asm__ __volatile__("sha1msg (%0, %1)" : : "r" (m0) : "memory");
+         break;
+      case 0x3ACC:
+         __asm__ __volatile__("sha1rnds4 (%0, %1, %%xmm0)" : : "r" (m0) : "memory");
+         break;
+      case 0xCB:
+         __asm__ __volatile__("sha256rnds2 (%0, %1, %%xmm0)" : : "r" (m0) : "memory");
+         break;
+      case 0xCC:
+         __asm__ __volatile__("sha256msg1 (%0, %1)" : : "r" (m0) : "memory");
+         break;
+      case 0xCD:
+         __asm__ __volatile__("sha256msg2 (%0, %1)" : : "r" (m0) : "memory");
+         break;
+      default:
+         vpanic("amd64g_dirtyhelper_SHAx");
+   }
+#  else
+   /* do nothing */
+   ((ULong*)out)[0] = 0UL;
+   ((ULong*)out)[1] = 0UL;
 #  endif
 }
 

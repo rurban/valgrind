@@ -22622,6 +22622,19 @@ Long dis_ESC_0F38 (
    delta++;
    switch (opc) {
 
+   case 0xC8:   /* 0F 38 C8 = SHA1NEXTE m128, m128 */
+   case 0xC9:   /* 0F 38 C9 = SHA1MSG1 m128, m128 */
+   case 0xCA:   /* 0F 38 CA = SHA1MSG2 m128, m128 */
+   case 0xCB:   /* 0F 38 CB = SHA256RNDS2 m128, m128, xmm0 */
+   case 0xCC:   /* 0F 38 CC = SHA256MSG1 m128, m128 */
+   case 0xCD:   /* 0F 38 CD = SHA256MSG1 m128, m128 */
+      /* FIXME: */
+      if (have66noF2noF3(pfx) && (archinfo->hwcaps & VEX_HWCAPS_AMD64_SHA)) {
+         return 3;
+      }
+      return 3;
+      break;
+
    case 0xF0:   /* 0F 38 F0 = MOVBE m16/32/64(E), r16/32/64(G) */
    case 0xF1: { /* 0F 38 F1 = MOVBE r16/32/64(G), m16/32/64(E) */
       if (!haveF2orF3(pfx) && !haveVEX(pfx)
@@ -32002,6 +32015,14 @@ Long dis_ESC_0F3A__VEX (
             goto decode_success;
          }
          /* else fall though; dis_FMA4 failed to decode it */
+      }
+      break;
+
+   case 0xCC:   /* 0F 3A CC = SHA1RNDS4 m128, m128, imm8 */
+      /* FIXME: */
+      if (have66noF2noF3(pfx) && (archinfo->hwcaps & VEX_HWCAPS_AMD64_SHA)) {
+         delta = 3;
+         goto decode_success;
       }
       break;
 

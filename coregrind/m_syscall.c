@@ -600,6 +600,10 @@ asm(
 
 #elif defined(VGP_x86_darwin)
 
+#ifndef __private_extern__
+#define __private_extern__ extern
+#endif
+
 /* Incoming args (syscall number + up to 8 args) come in on the stack
 
    The kernel's syscall calling convention is:
